@@ -19,7 +19,7 @@ RUN apt-get update -y \
     && apt-get install -y curl ca-certificates openssl git tar sqlite3 fontconfig tzdata locales iproute2 \
     && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
-    && curl --retry 3 -Lfso /tmp/graalvm.tar.gz https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${JAVA_VERSION}.0.${GRAAL_VERSION}/graalvm-community-jdk-${JAVA_VERSION}.0.${GRAAL_VERSION}_linux-x64_bin.tar.gz \
+    && curl --retry 3 -Lfso /tmp/graalvm.tar.gz https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.1/graalvm-community-jdk-21.0.1_linux-x64_bin.tar.gz \
     && mkdir -p /opt/java/graalvm \
     && cd /opt/java/graalvm \
     && tar -xf /tmp/graalvm.tar.gz --strip-components=1 \
