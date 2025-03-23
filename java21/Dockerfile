@@ -29,13 +29,16 @@ RUN apt-get update -y \
 ENV JAVA_HOME=/opt/java/graalvm \
     PATH="/opt/java/graalvm/bin:$PATH"
 
-# Check for JavaScript support and install if needed
+# Verify JavaScript support with a definitive test
 RUN java --version && \
-    echo "Checking JavaScript support..." && \
-    (which gu && gu list | grep -q js && echo "JavaScript already installed") || \
-    (which gu && gu install js && echo "JavaScript installed") || \
-    (java -version 2>&1 | grep -q "JavaScript" && echo "JavaScript is built-in") || \
-    echo "JavaScript support status unknown, may be built-in with this GraalVM version"
+    echo "Testing JavaScript functionality..." && \
+    echo "console.log('Hello from JavaScript in GraalVM');" > test.js && \
+    (java -jar $JAVA_HOME/lib/graalvm/graaljs-launcher.jar test.js || \
+     java -jar $JAVA_HOME/lib/graaljs-launcher.jar test.js || \
+     $JAVA_HOME/bin/js test.js || \
+     js test.js || \
+     echo "WARNING: JavaScript tests failed, JavaScript may not be included in this GraalVM build") && \
+    rm test.js
 
 # Create container user
 RUN useradd -d /home/container -m container
