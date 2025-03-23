@@ -29,24 +29,31 @@ RUN apt-get update -y \
 ENV JAVA_HOME=/opt/java/graalvm \
     PATH="/opt/java/graalvm/bin:$PATH"
 
-# Install JavaScript support for GraalVM 21 (standalone distribution)
+# Install JavaScript and Node.js support for GraalVM 21
 RUN apt-get update -y && \
     apt-get install -y wget && \
     mkdir -p /tmp/graaljs && \
     cd /tmp/graaljs && \
-    # Download and install the standalone GraalJS distribution
-    wget -q https://github.com/oracle/graaljs/releases/download/graal-21.0.1/graaljs-community-21.0.1-linux-amd64.tar.gz && \
-    tar -xzf graaljs-community-21.0.1-linux-amd64.tar.gz && \
-    # Copy the JavaScript runtime components to GraalVM installation
-    cp -rf graaljs-community-21.0.1/* $JAVA_HOME/ && \
-    # Verify JavaScript is working
+    # Download GraalJS and Node.js distribution
+    wget -q https://github.com/oracle/graaljs/releases/download/vm-21.3.3.1/graaljs-21.3.3.1-linux-amd64.tar.gz && \
+    wget -q https://github.com/oracle/graaljs/releases/download/vm-21.3.3.1/nodejs-installable-svm-java11-linux-amd64-21.3.3.1.jar && \
+    # Extract GraalJS
+    tar -xzf graaljs-21.3.3.1-linux-amd64.tar.gz && \
+    # Copy all JavaScript components to the GraalVM installation
+    cp -rf graaljs-21.3.3.1/* $JAVA_HOME/ && \
+    # Install Node.js using the JAR
+    java -jar nodejs-installable-svm-java11-linux-amd64-21.3.3.1.jar && \
+    # Test JavaScript
     echo "console.log('JavaScript test from GraalVM');" > test.js && \
     $JAVA_HOME/bin/js test.js && \
+    # Test Node.js
+    echo "console.log('Node.js test from GraalVM');" > test-node.js && \
+    $JAVA_HOME/bin/node test-node.js && \
     # Cleanup
     rm -rf /tmp/graaljs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
-    rm test.js
+    rm -f test.js test-node.js
 
 # Create container user
 RUN useradd -d /home/container -m container
