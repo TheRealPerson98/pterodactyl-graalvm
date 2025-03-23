@@ -29,22 +29,19 @@ RUN apt-get update -y \
 ENV JAVA_HOME=/opt/java/graalvm \
     PATH="/opt/java/graalvm/bin:$PATH"
 
-# Install JavaScript and Node.js support for GraalVM 21
+# Install standalone Node.js distribution for GraalVM 21
 RUN apt-get update -y && \
     apt-get install -y wget && \
-    mkdir -p /tmp/graaljs && \
-    cd /tmp/graaljs && \
-    # For GraalVM 21, we need to download the standalone distributions
-    # rather than using the jar installer
-    wget -q https://github.com/oracle/graaljs/releases/download/vm-23.0.1/js-installable-svm-java21-linux-amd64-23.0.1.jar && \
-    # Install JavaScript support
-    $JAVA_HOME/bin/java -jar js-installable-svm-java21-linux-amd64-23.0.1.jar && \
-    # Download Node.js support
-    wget -q https://github.com/oracle/graaljs/releases/download/vm-23.0.1/nodejs-installable-svm-java21-linux-amd64-23.0.1.jar && \
-    # Install Node.js support
-    $JAVA_HOME/bin/java -jar nodejs-installable-svm-java21-linux-amd64-23.0.1.jar && \
+    # Download the Node.js standalone distribution
+    wget -q -O /tmp/graalnodejs.tar.gz https://github.com/oracle/graaljs/releases/download/graal-24.0.2/graalnodejs-community-24.0.2-linux-amd64.tar.gz && \
+    # Extract it to a temporary location
+    mkdir -p /tmp/graalnodejs && \
+    tar -xzf /tmp/graalnodejs.tar.gz -C /tmp/graalnodejs --strip-components=1 && \
+    # Copy the Node.js binaries to the GraalVM installation
+    cp -R /tmp/graalnodejs/bin/* $JAVA_HOME/bin/ && \
+    cp -R /tmp/graalnodejs/lib/* $JAVA_HOME/lib/ && \
     # Cleanup
-    rm -rf /tmp/graaljs && \
+    rm -rf /tmp/graalnodejs /tmp/graalnodejs.tar.gz && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
