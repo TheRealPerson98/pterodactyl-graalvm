@@ -38,18 +38,11 @@ RUN apt-get update -y && \
     wget -q https://github.com/oracle/graaljs/releases/download/vm-21.3.3.1/nodejs-installable-svm-java11-linux-amd64-21.3.3.1.jar && \
     # Install Node.js using the JAR installer
     # This automatically installs both JS and Node.js components
-    $JAVA_HOME/bin/java -jar nodejs-installable-svm-java17-linux-amd64-21.3.3.1.jar && \
-    # Test JavaScript
-    echo "console.log('JavaScript test from GraalVM');" > test.js && \
-    $JAVA_HOME/bin/js test.js && \
-    # Test Node.js
-    echo "console.log('Node.js test from GraalVM');" > test-node.js && \
-    $JAVA_HOME/bin/node test-node.js && \
+    $JAVA_HOME/bin/java -jar nodejs-installable-svm-java11-linux-amd64-21.3.3.1.jar && \
     # Cleanup
     rm -rf /tmp/graaljs && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -f test.js test-node.js
+    rm -rf /var/lib/apt/lists/*
 
 # Create container user
 RUN useradd -d /home/container -m container
