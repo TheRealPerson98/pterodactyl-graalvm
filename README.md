@@ -19,6 +19,11 @@ This repository contains Pterodactyl-compatible Docker images for GraalVM with J
 - GraalVM Version: 22.3.1
 - [Documentation](java19/README.md)
 
+### Java 21
+- Tag: `ghcr.io/therealperson98/graalvm-js-java21:latest`
+- GraalVM Version: 23.1.1
+- [Documentation](java21/README.md)
+
 ## Features
 - Ubuntu 22.04 base image
 - GraalVM Community Edition with JavaScript support
