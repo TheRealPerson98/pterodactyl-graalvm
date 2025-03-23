@@ -34,11 +34,15 @@ RUN apt-get update -y && \
     apt-get install -y wget && \
     mkdir -p /tmp/graaljs && \
     cd /tmp/graaljs && \
-    # Download Node.js distribution (JAR installer)
-    wget -q https://github.com/oracle/graaljs/releases/download/vm-21.3.3.1/nodejs-installable-svm-java11-linux-amd64-21.3.3.1.jar && \
-    # Install Node.js using the JAR installer
-    # This automatically installs both JS and Node.js components
-    $JAVA_HOME/bin/java -jar nodejs-installable-svm-java11-linux-amd64-21.3.3.1.jar && \
+    # For GraalVM 21, we need to download the standalone distributions
+    # rather than using the jar installer
+    wget -q https://github.com/oracle/graaljs/releases/download/vm-23.0.1/js-installable-svm-java21-linux-amd64-23.0.1.jar && \
+    # Install JavaScript support
+    $JAVA_HOME/bin/java -jar js-installable-svm-java21-linux-amd64-23.0.1.jar && \
+    # Download Node.js support
+    wget -q https://github.com/oracle/graaljs/releases/download/vm-23.0.1/nodejs-installable-svm-java21-linux-amd64-23.0.1.jar && \
+    # Install Node.js support
+    $JAVA_HOME/bin/java -jar nodejs-installable-svm-java21-linux-amd64-23.0.1.jar && \
     # Cleanup
     rm -rf /tmp/graaljs && \
     apt-get clean && \
