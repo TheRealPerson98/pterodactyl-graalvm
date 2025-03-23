@@ -34,15 +34,11 @@ RUN apt-get update -y && \
     apt-get install -y wget && \
     mkdir -p /tmp/graaljs && \
     cd /tmp/graaljs && \
-    # Download GraalJS and Node.js distribution
-    wget -q https://github.com/oracle/graaljs/releases/download/vm-21.3.3.1/graaljs-21.3.3.1-linux-amd64.tar.gz && \
+    # Download Node.js distribution (JAR installer)
     wget -q https://github.com/oracle/graaljs/releases/download/vm-21.3.3.1/nodejs-installable-svm-java11-linux-amd64-21.3.3.1.jar && \
-    # Extract GraalJS
-    tar -xzf graaljs-21.3.3.1-linux-amd64.tar.gz && \
-    # Copy all JavaScript components to the GraalVM installation
-    cp -rf graaljs-21.3.3.1/* $JAVA_HOME/ && \
-    # Install Node.js using the JAR
-    java -jar nodejs-installable-svm-java11-linux-amd64-21.3.3.1.jar && \
+    # Install Node.js using the JAR installer
+    # This automatically installs both JS and Node.js components
+    $JAVA_HOME/bin/java -jar nodejs-installable-svm-java17-linux-amd64-21.3.3.1.jar && \
     # Test JavaScript
     echo "console.log('JavaScript test from GraalVM');" > test.js && \
     $JAVA_HOME/bin/js test.js && \
@@ -63,6 +59,6 @@ ENV USER=container HOME=/home/container
 
 WORKDIR /home/container
 
-COPY ./../entrypoint.sh /entrypoint.sh
+COPY ./entrypoint.sh /entrypoint.sh
 
 CMD ["/bin/bash", "/entrypoint.sh"] 
