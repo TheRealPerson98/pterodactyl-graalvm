@@ -29,15 +29,23 @@ RUN apt-get update -y \
 ENV JAVA_HOME=/opt/java/graalvm \
     PATH="/opt/java/graalvm/bin:$PATH"
 
-# Verify JavaScript support with a definitive test
-RUN java --version && \
-    echo "Testing JavaScript functionality..." && \
-    echo "console.log('Hello from JavaScript in GraalVM');" > test.js && \
-    (java -jar $JAVA_HOME/lib/graalvm/graaljs-launcher.jar test.js || \
-     java -jar $JAVA_HOME/lib/graaljs-launcher.jar test.js || \
-     $JAVA_HOME/bin/js test.js || \
-     js test.js || \
-     echo "WARNING: JavaScript tests failed, JavaScript may not be included in this GraalVM build") && \
+# Install JavaScript support for GraalVM 21 (standalone distribution)
+RUN apt-get update -y && \
+    apt-get install -y wget && \
+    mkdir -p /tmp/graaljs && \
+    cd /tmp/graaljs && \
+    # Download and install the standalone GraalJS distribution
+    wget -q https://github.com/oracle/graaljs/releases/download/graal-21.0.1/graaljs-community-21.0.1-linux-amd64.tar.gz && \
+    tar -xzf graaljs-community-21.0.1-linux-amd64.tar.gz && \
+    # Copy the JavaScript runtime components to GraalVM installation
+    cp -rf graaljs-community-21.0.1/* $JAVA_HOME/ && \
+    # Verify JavaScript is working
+    echo "console.log('JavaScript test from GraalVM');" > test.js && \
+    $JAVA_HOME/bin/js test.js && \
+    # Cleanup
+    rm -rf /tmp/graaljs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
     rm test.js
 
 # Create container user
