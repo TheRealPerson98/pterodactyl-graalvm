@@ -3,29 +3,39 @@
 # Minimum Panel Version: 1.7.0
 # Person98
 
-# Using official GraalVM community container image
-FROM ghcr.io/graalvm/jdk-community:21.0.1
+FROM ubuntu:22.04
 
 LABEL author="Person98"
 
-ENV DEBIAN_FRONTEND=noninteractive
+ARG GRAALVM_VERSION=21.0.2
 
+ENV DEBIAN_FRONTEND=noninteractive
 # Default to UTF-8 file.encoding
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
-# Install necessary packages and JavaScript support
+# Install necessary packages
 RUN apt-get update -y \
     && apt-get install -y curl ca-certificates openssl git tar sqlite3 fontconfig tzdata locales iproute2 \
     && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
-    # Download and install JavaScript standalone runtime
-    && cd /tmp \
-    && curl -L -o js.tar.gz https://github.com/oracle/graaljs/releases/download/vm-23.1.1/graaljs-community-23.1.1-linux-amd64.tar.gz \
+    # Download and install GraalVM
+    && mkdir -p /opt/java \
+    && cd /opt/java \
+    && curl -L -o graalvm.tar.gz https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${GRAALVM_VERSION}/graalvm-community-jdk-${GRAALVM_VERSION}_linux-x64_bin.tar.gz \
+    && tar -xzf graalvm.tar.gz \
+    && mv graalvm-* graalvm \
+    && rm graalvm.tar.gz \
+    # Download and install JavaScript standalone
     && mkdir -p /opt/graaljs \
-    && tar -xzf js.tar.gz -C /opt/graaljs --strip-components=1 \
+    && cd /opt/graaljs \
+    && curl -L -o js.tar.gz https://github.com/oracle/graaljs/releases/download/graal-23.1.2/graaljs-community-23.1.2-jvm-linux-amd64.tar.gz \
+    && tar -xzf js.tar.gz \
+    && rm js.tar.gz \
     && ln -s /opt/graaljs/bin/js /usr/local/bin/js \
-    && rm -rf /tmp/js.tar.gz \
     && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/opt/java/graalvm \
+    PATH="/opt/java/graalvm/bin:/opt/graaljs/bin:$PATH"
 
 # Create container user
 RUN useradd -d /home/container -m container
