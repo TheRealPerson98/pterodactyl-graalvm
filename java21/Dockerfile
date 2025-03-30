@@ -1,11 +1,77 @@
-FROM ghcr.io/graalvm/graalvm-community:21.0.0
+# Pterodactyl Core Dockerfile
+# env java
+# Minimum Panel Version: 1.7.0
+# Person98
 
-# Install GraalVM JavaScript
-RUN gu install js
+FROM ubuntu:22.04
 
-# Set up environment
-ENV JAVA_HOME=/opt/graalvm \
-    PATH="/opt/graalvm/bin:$PATH"
+LABEL author="Person98"
 
-# Verify installations
-RUN java -version && node --version && js --version
+ARG GRAAL_VERSION=23.0.1
+ARG JAVA_VERSION=21.0.1
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Default to UTF-8 file.encoding
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
+
+RUN apt-get update -y \
+    && apt-get install -y curl ca-certificates openssl git tar sqlite3 fontconfig tzdata locales iproute2 wget unzip \
+    && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+    && locale-gen en_US.UTF-8 \
+    && curl --retry 3 -Lfso /tmp/graalvm.tar.gz https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.1/graalvm-community-jdk-21.0.1_linux-x64_bin.tar.gz \
+    && mkdir -p /opt/java/graalvm \
+    && cd /opt/java/graalvm \
+    && tar -xf /tmp/graalvm.tar.gz --strip-components=1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/graalvm.tar.gz
+
+ENV JAVA_HOME=/opt/java/graalvm \
+    PATH="/opt/java/graalvm/bin:$PATH"
+
+# Install GraalVM JavaScript and required components
+RUN cd $JAVA_HOME/lib && \
+    # Download GraalVM JavaScript JARs
+    wget -q https://repo1.maven.org/maven2/org/graalvm/js/js/23.0.1/js-23.0.1.jar && \
+    wget -q https://repo1.maven.org/maven2/org/graalvm/js/js-launcher/23.0.1/js-launcher-23.0.1.jar && \
+    wget -q https://repo1.maven.org/maven2/org/graalvm/sdk/graal-sdk/23.0.1/graal-sdk-23.0.1.jar && \
+    wget -q https://repo1.maven.org/maven2/org/graalvm/truffle/truffle-api/23.0.1/truffle-api-23.0.1.jar && \
+    # Create necessary directories
+    mkdir -p $JAVA_HOME/jre/lib/boot && \
+    mkdir -p $JAVA_HOME/languages/js && \
+    # Create script launchers for js and node
+    echo '#!/bin/sh' > $JAVA_HOME/bin/js && \
+    echo 'exec $JAVA_HOME/bin/java -cp '"$JAVA_HOME/lib/graal-sdk-23.0.1.jar:$JAVA_HOME/lib/js-launcher-23.0.1.jar"' org.graalvm.js.launcher.JavaScriptLauncher "$@"' >> $JAVA_HOME/bin/js && \
+    chmod +x $JAVA_HOME/bin/js && \
+    # Create a symlink for node
+    ln -s $JAVA_HOME/bin/js $JAVA_HOME/bin/node && \
+    # Make JS and Node executables available
+    chmod +x $JAVA_HOME/bin/node
+
+# Install standalone Node.js distribution for GraalVM 21
+RUN apt-get update -y && \
+    apt-get install -y wget && \
+    # Download the Node.js standalone distribution
+    wget -q -O /tmp/graalnodejs.tar.gz https://github.com/oracle/graaljs/releases/download/graal-24.0.2/graalnodejs-community-24.0.2-linux-amd64.tar.gz && \
+    # Extract it to a temporary location
+    mkdir -p /tmp/graalnodejs && \
+    tar -xzf /tmp/graalnodejs.tar.gz -C /tmp/graalnodejs --strip-components=1 && \
+    # Copy the Node.js binaries to the GraalVM installation
+    cp -R /tmp/graalnodejs/bin/* $JAVA_HOME/bin/ && \
+    cp -R /tmp/graalnodejs/lib/* $JAVA_HOME/lib/ && \
+    # Cleanup
+    rm -rf /tmp/graalnodejs /tmp/graalnodejs.tar.gz && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create container user
+RUN useradd -d /home/container -m container
+
+USER container
+ENV USER=container HOME=/home/container
+
+WORKDIR /home/container
+
+COPY ./entrypoint.sh /entrypoint.sh
+
+CMD ["/bin/bash", "/entrypoint.sh"] 
