@@ -72,6 +72,7 @@ ENV USER=container HOME=/home/container
 
 WORKDIR /home/container
 
-COPY ./entrypoint.sh /entrypoint.sh
+# Copy the entrypoint.sh from the java21 directory
+COPY ./java21/entrypoint.sh /entrypoint.sh
 
 CMD ["/bin/bash", "/entrypoint.sh"] 
