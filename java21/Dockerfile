@@ -8,6 +8,7 @@ FROM ubuntu:22.04
 LABEL author="Person98"
 
 ARG GRAALVM_VERSION=21.0.2
+ARG NODE_VERSION=18.18.2
 
 ENV DEBIAN_FRONTEND=noninteractive
 # Default to UTF-8 file.encoding
@@ -25,17 +26,23 @@ RUN apt-get update -y \
     && tar -xzf graalvm.tar.gz \
     && mv graalvm-* graalvm \
     && rm graalvm.tar.gz \
-    # Download and install JavaScript standalone
-    && mkdir -p /opt/graaljs \
-    && cd /opt/graaljs \
-    && curl -L -o js.tar.gz https://github.com/oracle/graaljs/releases/download/graal-23.1.2/graaljs-community-23.1.2-jvm-linux-amd64.tar.gz \
-    && tar -xzf js.tar.gz \
-    && rm js.tar.gz \
-    && ln -s /opt/graaljs/bin/js /usr/local/bin/js \
+    # Install Node.js (which includes JavaScript)
+    && mkdir -p /opt/nodejs \
+    && cd /opt/nodejs \
+    && curl -L -o node.tar.gz https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz \
+    && tar -xzf node.tar.gz --strip-components=1 \
+    && rm node.tar.gz \
+    && ln -s /opt/nodejs/bin/node /usr/local/bin/node \
+    && ln -s /opt/nodejs/bin/npm /usr/local/bin/npm \
+    && ln -s /opt/nodejs/bin/npx /usr/local/bin/npx \
+    # Create a JavaScript runner script that uses Node
+    && echo '#!/bin/bash' > /usr/local/bin/js \
+    && echo 'node "$@"' >> /usr/local/bin/js \
+    && chmod +x /usr/local/bin/js \
     && rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME=/opt/java/graalvm \
-    PATH="/opt/java/graalvm/bin:/opt/graaljs/bin:$PATH"
+    PATH="/opt/java/graalvm/bin:/opt/nodejs/bin:$PATH"
 
 # Create container user
 RUN useradd -d /home/container -m container
